@@ -120,10 +120,7 @@ class Blockchain {
                 if (currentTime - timestamp < 300) {
                     let isValid = bitcoinMessage.verify(message, address, signature);
                     if (isValid) {
-                        let newBlock = await self._addBlock(new BlockClass.Block({
-                            owner: address,
-                            data: star
-                        }));
+                        let newBlock = await self._addBlock(new BlockClass.Block({message, address, signature, star}));
                         if (newBlock) {
                             resolve(block)
                         }

@@ -17,6 +17,7 @@ class BlockchainController {
         this.submitStar();
         this.getBlockByHash();
         this.getStarsByOwner();
+        this.getValidateChain();
     }
 
     // Enpoint to Get a Block by Height (GET Endpoint)
@@ -26,6 +27,7 @@ class BlockchainController {
                 const height = parseInt(req.params.height);
                 let block = await this.blockchain.getBlockByHeight(height);
                 if(block){
+                    // return res.status(200).json(this.blockchain.chain[height]);
                     return res.status(200).json(block);
                 } else {
                     return res.status(404).send("Block Not Found!");
@@ -70,7 +72,7 @@ class BlockchainController {
                         return res.status(500).send("An error happened!");
                     }
                 } catch (error) {
-                    return res.status(500).send(error);
+                    return res.status(500).send(error.message);
                 }
             } else {
                 return res.status(500).send("Check the Body Parameter!");
@@ -80,7 +82,7 @@ class BlockchainController {
 
     // This endpoint allows you to retrieve the block by hash (GET endpoint)
     getBlockByHash() {
-        this.app.get("/block/:hash", async (req, res) => {
+        this.app.get("/block/hash/:hash", async (req, res) => {
             if(req.params.hash) {
                 const hash = req.params.hash;
                 let block = await this.blockchain.getBlockByHash(hash);
@@ -115,6 +117,18 @@ class BlockchainController {
                 return res.status(500).send("Block Not Found! Review the Parameters!");
             }
             
+        });
+    }
+
+    getValidateChain() {
+        this.app.get("/validateChain", async (req, res) => {
+            let errLog = await this.blockchain.validateChain();
+            if(errLog){
+                return res.status(200).json(errLog);
+            } else {
+                return res.status(404).send("No error Found!");
+            }
+             
         });
     }
 

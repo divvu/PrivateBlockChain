@@ -114,23 +114,23 @@ class Blockchain {
     submitStar(address, message, signature, star) {
         let self = this;
         return new Promise(async (resolve, reject) => {
-            if (message.split(':').length === 3) {
+            if (message.split(':').length === 3) { // verify if the message is signed having three components seperated by colon
                 let timestamp = parseInt(message.split(':')[1])
                 let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
-                if (currentTime - timestamp < 300) {
+                if (currentTime - timestamp <= 300) { 
                     let isValid = bitcoinMessage.verify(message, address, signature);
                     if (isValid) {
                         let newBlock = await self._addBlock(new BlockClass.Block({message, address, signature, star}));
                         if (newBlock) {
-                            resolve(block)
+                            resolve(newBlock)
                         }
                         resolve(null)
                     }
                     resolve("Block could not be verified.")
                 }
-                reject(Error("Timeout"));
+                reject(Error("Timeout Error, Generate message again."));
             }
-            resolve(null)
+            resolve("Message is not signed properly")
         });
     }
 
@@ -181,7 +181,7 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             for (let block of self.chain) {
                 let blockData = await block.getBData();
-                if (blockData.owner === address) {
+                if (blockData && blockData.address === address) {
                     stars.push(blockData.star)
                 }
             }
@@ -193,15 +193,18 @@ class Blockchain {
      * This method will return a Promise that will resolve with the list of errors when validating the chain.
      * Steps to validate:
      * 1. You should validate each block using `validateBlock`
-     * 2. Each Block should check the with the previousBlockHash
+     * 2. Each Block should check with the previousBlockHash
      */
     validateChain() {
         let self = this;
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
-            for (let i = 1; i <= this.height; i++) { 
-                let block = this.chain[i];
-                    errorLog.push(block.validate());
+            let previousBlockHash = null;
+            for (const block of this.chain) { 
+                const isValid = await block.validate();
+                if(!isValid || block.previousBlockHash !== previousBlockHash)
+                    errorLog.push({block, err: "Block could not be validated"});
+                previousBlockHash = block.hash;
             }
             resolve(errorLog)
         });
